@@ -1,0 +1,30 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  backend:
+    build: ./backend
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      SQLITE_PATH: /data/ocarina.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - sqlite_data:/data
+    depends_on:
+      - qdrant
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  qdrant_data:
+  sqlite_data:
