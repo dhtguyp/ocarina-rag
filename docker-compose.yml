@@ -18,6 +18,12 @@ services:
     depends_on:
       - qdrant
 
+  backend-test:
+    build:
+      context: ./backend
+      target: test
+    profiles: ["test"]  # only runs on demand, never with `docker compose up`
+
   frontend:
     build: ./frontend
     ports:
