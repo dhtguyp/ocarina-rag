@@ -9,7 +9,7 @@ Matching is two-tier:
 
 See [PLAN.md](PLAN.md) for the full design.
 
-> **Status:** work in progress. Backend seeding and interval logic are done; the query API and the ocarina UI are coming next.
+> **Status:** work in progress. Backend, query API and the ocarina UI are in place; browser E2E tests and tuning come next.
 
 ## Requirements
 
@@ -29,13 +29,14 @@ docker compose up --build
 
 On startup the backend seeds the song database (SQLite) and the vector index (Qdrant). Seeding is idempotent, so restarting is safe. Stop with `docker compose down`; add `-v` to also wipe the stored data.
 
-## Tests
+## Unit tests
 
 ```bash
-docker compose run --rm --build backend-test
+docker compose run --rm --build backend-test    # pytest
+docker compose run --rm --build frontend-test   # vitest + Testing Library
 ```
 
-This builds a test image from the same locked dependencies and runs pytest inside it. It needs no running services and doesn't start with `docker compose up`.
+Each builds a test image from the same locked dependencies and runs inside it. Neither needs the stack running, and neither starts with `docker compose up`.
 
 ## End-to-end tests
 

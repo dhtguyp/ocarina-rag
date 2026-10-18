@@ -13,7 +13,7 @@ A full-stack, containerized application that mimics the Ocarina mechanism from *
 * **Frontend:** React + TypeScript + Vite + Mantine, styled with an Ocarina-themed layout. Served by nginx in Docker, with `/api` proxied to the backend (no CORS setup).
 * **Vector Database:** Qdrant (Docker), storing interval vectors and payloads.
 * **Metadata Database:** SQLite via SQLAlchemy (song titles, origins, full MIDI note sheets, canonical start pitch). Tables created with `create_all()` on startup; no Alembic (8 rows, no migrations needed).
-* **Testing:** pytest for interval and scoring logic.
+* **Testing:** pytest (backend unit), Vitest + Testing Library (frontend unit, run in Docker via `frontend-test`), black-box E2E in `e2e/`.
 * **Containerization:** Docker & Docker Compose (single-command boot: `qdrant`, `backend`, `frontend`).
 
 ---
@@ -64,22 +64,22 @@ Seeding is idempotent and runs on backend startup (and is also runnable via `pyt
 
 ## 5. UI & Interactive Specifications
 * **Ocarina-Themed Dashboard (Mantine):**
-  * Custom layout resembling the Nintendo 64 Ocarina interface style.
-  * 5 note buttons (A, C-Down, C-Right, C-Left, C-Up) as above. Plays the note on press. Volume slider.
+  * Layout: a music staff (treble clef, in-game style) on top, showing the played notes at their fixed staff positions (D4 below the bottom line, F4 first space, A4 second space, B4 third line, D5 fourth line); below it an **ocarina-shaped** pad holding the 5 note buttons; below that a separate controls panel (pitch, volume, reset) outside the ocarina.
+  * 5 note buttons (A, C-Down, C-Right, C-Left, C-Up) as above. The note starts on press-down and sustains while the button is held (released on pointer/key up). Volume slider.
   * **Semitone Toggle (+ / -):** Shifts the pitch of the whole pad (range ±12), like in the game. It changes the audio pitch played and enters the penalty calculation via `Δ`. The current shift is displayed.
   * **Auto-Trigger on 6th Note:** Once the 6th note is input, the client sends the HTTP request to the FastAPI backend.
   * **Reset / Clear Button:** Clears the input buffer before 6 notes are reached (and after a result).
   * **In-Game Success Event (Confidence ≥ 90%):**
     * Zelda-style banner displaying the song name and origin.
     * **Web Audio API** plays back the matched song's jingle, synthesized client-side from the MIDI notes returned by the API (no audio files).
-  * **Fallback View (< 90%):** Displays closest matches (above the no-match floor) with confidence breakdowns (interval similarity vs. pitch penalty). If nothing clears the floor, shows a "no match" state.
+  * **Fallback View (< 90%):** Displays closest matches (above the no-match floor) with confidence breakdowns (interval similarity vs. pitch penalty). If nothing clears the floor (no match), the actual played notes fall out of their slots over 2 s with a failure jingle, then the input resets automatically.
 
 ---
 
 ## 6. Architecture & Data Flow
 ```
 [React + Mantine UI]
-│ POST /api/query  { notes: [6 MIDI ints, as played incl. shift], shift: int }
+│ POST /api/query  { notes: [6 base pad MIDI ints, unshifted], shift: int }
 ▼
 [FastAPI Backend]
 ├─► Computes interval deltas
@@ -123,10 +123,12 @@ Ocarina-RAG/
     ├── nginx.conf              # serves SPA, proxies /api
     ├── package.json
     ├── package-lock.json       # pinned deps; Docker build uses `npm ci`
+    ├── vite.config.ts          # also holds the Vitest config
     └── src/
         ├── App.tsx
-        ├── components/         # Ocarina Pad, Mantine UI Shell, Success Banner, Results View
-        └── utils/              # Web Audio API player helper
+        ├── components/         # Ocarina Pad, Music Staff, Controls, Success Banner, Results View
+        ├── utils/              # Web Audio API player helper
+        └── test/               # Vitest setup; unit tests sit next to their sources (*.test.ts[x])
 ```
 
 ---

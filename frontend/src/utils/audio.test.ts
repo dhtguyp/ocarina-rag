@@ -1,0 +1,103 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// A fake Web Audio graph that records what gets created and scheduled.
+let oscillators: { frequency: { value: number }; start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; type: string }[];
+let resume: ReturnType<typeof vi.fn>;
+
+function installFakeAudio(state: "running" | "suspended" = "running") {
+  oscillators = [];
+  resume = vi.fn();
+  const param = () => ({
+    value: 0,
+    setValueAtTime: vi.fn(),
+    cancelScheduledValues: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
+    exponentialRampToValueAtTime: vi.fn(),
+  });
+  const node = (extra = {}) => ({ connect: vi.fn((n) => n), ...extra });
+  class FakeCtx {
+    currentTime = 10;
+    state = state;
+    destination = {};
+    resume = resume;
+    createOscillator() {
+      const o = node({ frequency: param(), type: "sine", start: vi.fn(), stop: vi.fn() });
+      oscillators.push(o as any);
+      return o;
+    }
+    createGain() {
+      return node({ gain: param() });
+    }
+  }
+  (window as any).AudioContext = FakeCtx;
+}
+
+// audio.ts caches its context at module level, so re-import it for each test.
+async function load() {
+  vi.resetModules();
+  return import("./audio");
+}
+
+describe("audio", () => {
+  beforeEach(() => installFakeAudio());
+
+  it("startNote plays one note at the right frequency (A4 = 440 Hz)", async () => {
+    const { startNote } = await load();
+    startNote(69, 0.5);
+    // each tone = main oscillator + vibrato LFO
+    expect(oscillators).toHaveLength(2);
+    expect(oscillators[0].frequency.value).toBeCloseTo(440);
+  });
+
+  it("an octave up doubles the frequency", async () => {
+    const { startNote } = await load();
+    startNote(81, 0.5);
+    expect(oscillators[0].frequency.value).toBeCloseTo(880);
+  });
+
+  it("is silent at zero volume", async () => {
+    const { startNote, playSequence, playFailure } = await load();
+    startNote(69, 0)();
+    playSequence([62, 65], 0);
+    playFailure(0);
+    expect(oscillators).toHaveLength(0);
+  });
+
+  it("startNote sustains until stop() is called, then releases once", async () => {
+    const { startNote } = await load();
+    const stop = startNote(69, 0.5);
+    expect(oscillators[0].stop).not.toHaveBeenCalled(); // still sounding while held
+    stop();
+    expect(oscillators[0].stop).toHaveBeenCalledOnce();
+    stop(); // idempotent
+    expect(oscillators[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it("playSequence schedules every note in order and returns its duration", async () => {
+    const { playSequence } = await load();
+    const duration = playSequence([62, 65, 69], 0.5, 0.3);
+    const mains = oscillators.filter((_, i) => i % 2 === 0);
+    expect(mains.map((o) => o.start.mock.calls[0][0])).toEqual([
+      expect.closeTo(10.05), expect.closeTo(10.35), expect.closeTo(10.65),
+    ]);
+    expect(duration).toBeCloseTo(2 * 0.3 + 0.3 * 2.5);
+  });
+
+  it("playFailure plays three descending triangle notes", async () => {
+    const { playFailure } = await load();
+    playFailure(0.5);
+    const mains = oscillators.filter((_, i) => i % 2 === 0);
+    const freqs = mains.map((o) => o.frequency.value);
+    expect(freqs).toHaveLength(3);
+    expect(freqs[0]).toBeGreaterThan(freqs[1]);
+    expect(freqs[1]).toBeGreaterThan(freqs[2]);
+    expect(mains.every((o) => o.type === "triangle")).toBe(true);
+  });
+
+  it("resumes a suspended context (browser autoplay policy)", async () => {
+    installFakeAudio("suspended");
+    const { startNote } = await load();
+    startNote(69, 0.5);
+    expect(resume).toHaveBeenCalled();
+  });
+});

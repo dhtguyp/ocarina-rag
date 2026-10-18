@@ -30,6 +30,12 @@ services:
       target: test
     profiles: ["test"]  # only runs on demand, never with `docker compose up`
 
+  frontend-test:
+    build:
+      context: ./frontend
+      target: test
+    profiles: ["test"]  # on demand only
+
   frontend:
     build: ./frontend
     ports:
