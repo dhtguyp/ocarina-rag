@@ -17,6 +17,12 @@ services:
       - sqlite_data:/data
     depends_on:
       - qdrant
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
 
   backend-test:
     build:
@@ -29,7 +35,9 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
 
 volumes:
   qdrant_data:

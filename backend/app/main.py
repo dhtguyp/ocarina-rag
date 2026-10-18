@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.routes import router
 from app.seed import seed
 
 
@@ -13,9 +14,4 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Ocarina RAG", lifespan=lifespan)
-
-
-@app.get("/api/health")
-async def health() -> dict[str, str]:
-    # Placeholder liveness; Qdrant + SQLite checks arrive in Step 3.
-    return {"status": "ok"}
+app.include_router(router)
