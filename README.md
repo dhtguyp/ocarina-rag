@@ -37,6 +37,20 @@ docker compose run --rm --build backend-test
 
 This builds a test image from the same locked dependencies and runs pytest inside it. It needs no running services and doesn't start with `docker compose up`.
 
+## End-to-end tests
+
+The E2E tests run against an already-running stack, so start it first:
+
+```bash
+docker compose up -d --build
+docker compose --profile e2e run --rm --build e2e
+docker compose down   # when you're done
+```
+
+The tests run in a separate container and go through nginx exactly like a browser would (`http://frontend/api/...`), plus a direct backend check. If the stack isn't up, they wait up to 60 s, then stop with a message telling you to run `docker compose up`. Nothing to install.
+
+The E2E suite lives in `e2e/` (`tests/backend/` today). Browser tests for the UI will be added once it exists.
+
 ## Tech stack
 
 Python 3.12 · FastAPI · Qdrant · SQLite/SQLAlchemy · React + TypeScript + Vite + Mantine · nginx · Docker Compose

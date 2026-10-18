@@ -38,6 +38,9 @@ services:
       backend:
         condition: service_healthy
 
+  e2e:
+    build: ./e2e
+    profiles: ["e2e"]  # on demand only; no depends_on, so it never starts the stack itself
 
 volumes:
   qdrant_data:

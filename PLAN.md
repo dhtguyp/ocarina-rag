@@ -114,6 +114,10 @@ Ocarina-RAG/
 │       ├── models/             # SQLAlchemy models, Pydantic schemas
 │       ├── services/           # Interval vectorization, Qdrant client, hybrid scoring
 │       └── seed.py             # Idempotent dataset seeder
+├── e2e/                        # black-box tests against the composed stack
+│   ├── Dockerfile
+│   ├── pyproject.toml / uv.lock
+│   └── tests/                  # backend/ now; frontend/ (browser) with Step 4
 └── frontend/
     ├── Dockerfile              # build + nginx
     ├── nginx.conf              # serves SPA, proxies /api
@@ -137,7 +141,7 @@ Ocarina-RAG/
 
 *  Step 4: Build the React + Mantine frontend with the 5-button Ocarina pad, semitone toggle, volume, auto-submit on 6 notes, reset, success banner, results view, and Web Audio API playback/jingle.
 
-*  Step 5: End-to-end integration testing via Docker Compose; tune constants and the easter-egg melodies.
+*  Step 5: Run and extend the E2E suite (against a running stack: `docker compose up -d --build`, then `docker compose --profile e2e run --rm --build e2e`), add browser tests for the UI; tune constants and the easter-egg melodies.
 
 ---
 
