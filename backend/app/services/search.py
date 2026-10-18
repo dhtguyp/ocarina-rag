@@ -38,6 +38,8 @@ def query_songs(req: QueryRequest, client: QdrantClient, session: Session) -> Qu
                 pitch_penalty=penalty,
                 delta=delta,
                 notes=song.notes,
+                durations=song.durations,
+                bpm=song.bpm,
             )
         )
     matches.sort(key=lambda m: m.confidence, reverse=True)

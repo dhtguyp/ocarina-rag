@@ -40,3 +40,22 @@ def test_seed_qdrant_searches_by_interval_shape(session):
     hit = client.query_points(settings.qdrant_collection, query=query, limit=1, with_payload=True).points[0]
     assert hit.payload["slug"] == "song-of-storms"
     assert hit.payload["canonical_pitch"] == 62
+
+
+def test_init_db_rebuilds_a_stale_songs_table(tmp_path, monkeypatch):
+    """An old volume (songs table without durations/bpm) is rebuilt, not crashed on."""
+    from sqlalchemy import text
+
+    from app.core import db
+
+    engine = create_engine(f"sqlite:///{tmp_path}/old.db")
+    with engine.begin() as conn:
+        conn.execute(text("CREATE TABLE songs (id INTEGER PRIMARY KEY, slug VARCHAR, title VARCHAR, origin VARCHAR, notes JSON)"))
+        conn.execute(text("INSERT INTO songs VALUES (1, 'x', 'X', 'Y', '[1,2,3,4,5,6]')"))
+    monkeypatch.setattr(db, "engine", engine)
+
+    db.init_db()
+    with Session(engine) as s:
+        songs = seed_sqlite(s)
+    assert len(songs) == len(SONGS)
+    assert all(song.durations and song.bpm for song in songs)

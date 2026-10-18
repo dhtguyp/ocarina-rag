@@ -58,7 +58,7 @@ describe("audio", () => {
   it("is silent at zero volume", async () => {
     const { startNote, playSequence, playFailure } = await load();
     startNote(69, 0)();
-    playSequence([62, 65], 0);
+    playSequence([62, 65], [1, 1], 100, 0);
     playFailure(0);
     expect(oscillators).toHaveLength(0);
   });
@@ -73,14 +73,29 @@ describe("audio", () => {
     expect(oscillators[0].stop).toHaveBeenCalledOnce();
   });
 
-  it("playSequence schedules every note in order and returns its duration", async () => {
+  const starts = () => oscillators.filter((_, i) => i % 2 === 0).map((o) => o.start.mock.calls[0][0] as number);
+
+  it("playSequence spaces notes by their own lengths and returns the total", async () => {
     const { playSequence } = await load();
-    const duration = playSequence([62, 65, 69], 0.5, 0.3);
-    const mains = oscillators.filter((_, i) => i % 2 === 0);
-    expect(mains.map((o) => o.start.mock.calls[0][0])).toEqual([
-      expect.closeTo(10.05), expect.closeTo(10.35), expect.closeTo(10.65),
-    ]);
-    expect(duration).toBeCloseTo(2 * 0.3 + 0.3 * 2.5);
+    // 60 bpm -> 1 beat = 1 s; lengths 2, 1, 3 beats (half, quarter, dotted half)
+    const duration = playSequence([71, 74, 69], [2, 1, 3], 60, 0.5);
+    expect(starts()).toEqual([expect.closeTo(10.05), expect.closeTo(12.05), expect.closeTo(13.05)]);
+    expect(duration).toBeCloseTo(6);
+  });
+
+  it("holds long notes longer than short ones", async () => {
+    const { playSequence } = await load();
+    playSequence([62, 65], [0.5, 3], 120, 0.5); // 0.25 s vs 1.5 s
+    const stops = oscillators.filter((_, i) => i % 2 === 0).map((o) => o.stop.mock.calls[0][0] as number);
+    const [s0, s1] = starts();
+    expect(stops[1] - s1).toBeGreaterThan((stops[0] - s0) * 4);
+  });
+
+  it("tempo scales the whole jingle", async () => {
+    const { playSequence } = await load();
+    const slow = playSequence([62, 65], [1, 1], 60, 0.5);
+    const fast = playSequence([62, 65], [1, 1], 120, 0.5);
+    expect(slow).toBeCloseTo(fast * 2);
   });
 
   it("playFailure plays three descending triangle notes", async () => {

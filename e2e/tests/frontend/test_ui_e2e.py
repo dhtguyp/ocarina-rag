@@ -15,9 +15,9 @@ ZIGZAG = ["a", "c-up", "a", "c-up", "a", "c-up"]  # matches nothing
 
 # Counts oscillator starts/stops so tests can observe sound without hearing it.
 AUDIO_SPY = """
-window.__audio = { started: 0, stopped: 0 };
+window.__audio = { started: 0, stopped: 0, times: [] };
 const s = OscillatorNode.prototype.start, t = OscillatorNode.prototype.stop;
-OscillatorNode.prototype.start = function (...a) { window.__audio.started++; return s.apply(this, a); };
+OscillatorNode.prototype.start = function (...a) { window.__audio.started++; window.__audio.times.push(a[0]); return s.apply(this, a); };
 OscillatorNode.prototype.stop = function (...a) { window.__audio.stopped++; return t.apply(this, a); };
 """
 
@@ -97,6 +97,21 @@ def test_success_plays_the_jingle_and_replay_plays_it_again(app: Page):
     after_success = audio(app)["started"]
     app.get_by_test_id("replay").click()
     assert audio(app)["started"] >= after_success + 12  # 6 notes x (tone + vibrato)
+
+
+def test_lullaby_jingle_uses_its_real_note_lengths(app: Page):
+    play(app, LULLABY)
+    expect(app.get_by_role("dialog")).to_be_visible()
+    app.wait_for_timeout(300)
+    app.evaluate("window.__audio.times.length = 0")  # ignore the pad presses and first jingle
+    app.get_by_test_id("replay").click()
+    times = sorted(set(app.evaluate("window.__audio.times")))  # tone + vibrato share a start time
+    assert len(times) == 6
+    gaps = [b - a for a, b in zip(times, times[1:])]
+    beat = 60 / 84  # Zelda's Lullaby: 3/4 at 84 bpm
+    # half, quarter, dotted half, half, quarter  (the 6th note's own length is not observable here)
+    for gap, beats in zip(gaps, [2, 1, 3, 2, 1]):
+        assert gap == pytest.approx(beats * beat, rel=0.02)
 
 
 def test_transposition_via_pitch_toggle_is_shown_with_a_small_penalty(app: Page):

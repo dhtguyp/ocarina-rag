@@ -15,6 +15,13 @@ SONGS = {
 }
 
 
+# Jingle rhythm (beats, quarter = 1) and tempo for the Zelda songs.
+RHYTHM = {
+    "zeldas-lullaby": ([2, 1, 3, 2, 1, 3], 84),
+    "song-of-time": ([1.5, 1.5, 3, 1.5, 1.5, 3], 100),
+}
+
+
 def query(api, notes, shift=0):
     return api.post("/api/query", json={"notes": notes, "shift": shift})
 
@@ -37,6 +44,12 @@ def test_each_song_is_recognised(api, slug):
     assert top["slug"] == slug
     assert top["confidence"] == pytest.approx(1.0)
     assert top["notes"] == SONGS[slug]
+
+
+@pytest.mark.parametrize("slug", RHYTHM)
+def test_matches_carry_the_jingle_rhythm(api, slug):
+    top = query(api, SONGS[slug]).json()["matches"][0]
+    assert (top["durations"], top["bpm"]) == RHYTHM[slug]
 
 
 def test_transposed_play_still_matches_with_small_penalty(api):

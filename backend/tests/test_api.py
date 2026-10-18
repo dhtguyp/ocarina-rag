@@ -44,6 +44,7 @@ def test_health_and_songs(client):
     songs = client.get("/api/songs").json()
     assert len(songs) == len(SONGS)
     assert {s["slug"] for s in songs} == set(BY_SLUG)
+    assert all(len(s["durations"]) == len(s["notes"]) and s["bpm"] > 0 for s in songs)
 
 
 @pytest.mark.parametrize("slug", BY_SLUG)
@@ -54,6 +55,9 @@ def test_every_song_matches_itself_at_100_percent(client, slug):
     assert top["confidence"] == pytest.approx(1.0)
     assert top["pitch_penalty"] == 0 and top["delta"] == 0
     assert top["notes"] == BY_SLUG[slug]
+    song = next(s for s in SONGS if s["slug"] == slug)
+    assert top["durations"] == song["durations"]
+    assert top["bpm"] == song["bpm"]
     assert body["success"] is True
 
 

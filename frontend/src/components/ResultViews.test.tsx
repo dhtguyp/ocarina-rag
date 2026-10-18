@@ -9,7 +9,7 @@ import SuccessBanner from "./SuccessBanner";
 const match = (over: Partial<Match> = {}): Match => ({
   slug: "song-of-time", title: "Song of Time", origin: "Ocarina of Time",
   confidence: 0.97, interval_sim: 1, pitch_penalty: 0.03, delta: 3,
-  notes: [69, 62, 65, 69, 62, 65], ...over,
+  notes: [69, 62, 65, 69, 62, 65], durations: [1, 1, 1, 1, 1, 1], bpm: 100, ...over,
 });
 
 describe("SuccessBanner", () => {

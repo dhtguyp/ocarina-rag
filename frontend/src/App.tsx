@@ -6,7 +6,7 @@ import MusicStaff from "./components/MusicStaff";
 import OcarinaPad from "./components/OcarinaPad";
 import ResultsView from "./components/ResultsView";
 import SuccessBanner from "./components/SuccessBanner";
-import { NOTE_COUNT, type QueryResponse } from "./types";
+import { NOTE_COUNT, type Match, type QueryResponse } from "./types";
 import { playFailure, playSequence, startNote } from "./utils/audio";
 
 type Phase = "input" | "loading" | "done" | "error";
@@ -24,6 +24,7 @@ export default function App() {
   volumeRef.current = volume;
 
   const vol = () => volumeRef.current / 100;
+  const playJingle = (m: Match) => playSequence(m.notes, m.durations, m.bpm, vol());
 
   // The note currently sounding (held button). Released on any pointer/key release.
   const heldRef = useRef<(() => void) | null>(null);
@@ -69,7 +70,7 @@ export default function App() {
       if (id !== requestId.current) return;
       setResult(res);
       setPhase("done");
-      if (res.success) playSequence(res.matches[0].notes, vol());
+      if (res.success) playJingle(res.matches[0]);
       else if (res.matches.length === 0) playFailure(vol());
     } catch {
       if (id !== requestId.current) return;
@@ -142,7 +143,7 @@ export default function App() {
           {top && (
             <SuccessBanner
               match={top}
-              onReplay={() => playSequence(top.notes, vol())}
+              onReplay={() => playJingle(top)}
               onReset={reset}
             />
           )}

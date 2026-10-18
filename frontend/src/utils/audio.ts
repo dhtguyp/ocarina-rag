@@ -78,14 +78,17 @@ export function startNote(midi: number, volume: number): () => void {
   };
 }
 
-/** Play a melody (the success jingle). Returns its duration in seconds. */
-export function playSequence(midis: number[], volume: number, step = 0.3): number {
+/** Jingle: a melody with per-note lengths (in beats) at `bpm`. Returns its duration in seconds. */
+export function playSequence(midis: number[], durations: number[], bpm: number, volume: number): number {
+  const beat = 60 / bpm;
   const t0 = getCtx().currentTime + 0.05;
+  let t = t0;
   midis.forEach((m, i) => {
-    const last = i === midis.length - 1;
-    tone(m, t0 + i * step, last ? step * 2.5 : step * 1.4, volume);
+    const len = (durations[i] ?? 1) * beat;
+    tone(m, t, Math.max(len * 0.95, 0.08), volume); // slight gap so repeated notes articulate
+    t += len;
   });
-  return (midis.length - 1) * step + step * 2.5;
+  return t - t0;
 }
 
 /** Descending "wrong" jingle for no-match. */

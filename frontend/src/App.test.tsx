@@ -20,7 +20,7 @@ const query = vi.mocked(queryNotes);
 const match = (over: Partial<Match> = {}): Match => ({
   slug: "song-of-time", title: "Song of Time", origin: "Ocarina of Time",
   confidence: 1, interval_sim: 1, pitch_penalty: 0, delta: 0,
-  notes: [69, 62, 65, 69, 62, 65], ...over,
+  notes: [69, 62, 65, 69, 62, 65], durations: [1.5, 1.5, 3, 1.5, 1.5, 3], bpm: 100, ...over,
 });
 const SUCCESS: QueryResponse = { matches: [match()], success: true };
 const PARTIAL: QueryResponse = { matches: [match({ confidence: 0.7, title: "Close One" })], success: false };
@@ -96,7 +96,7 @@ describe("App", () => {
     await press(...SIX);
     expect(await screen.findByTestId("success-banner")).toBeInTheDocument();
     expect(screen.getByTestId("banner-title")).toHaveTextContent("Song of Time");
-    expect(playSequence).toHaveBeenCalledWith([69, 62, 65, 69, 62, 65], 0.6);
+    expect(playSequence).toHaveBeenCalledWith([69, 62, 65, 69, 62, 65], [1.5, 1.5, 3, 1.5, 1.5, 3], 100, 0.6);
     expect(playFailure).not.toHaveBeenCalled();
   });
 

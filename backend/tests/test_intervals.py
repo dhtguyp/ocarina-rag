@@ -45,3 +45,20 @@ def test_seed_songs_are_valid_and_distinct():
     vectors = [tuple(to_vector(s["notes"])) for s in SONGS]
     assert len(set(vectors)) == len(SONGS)  # no two songs share an interval shape
     assert len({s["slug"] for s in SONGS}) == len(SONGS)
+
+
+def test_every_song_has_a_rhythm():
+    for s in SONGS:
+        assert len(s["durations"]) == len(s["notes"]), s["slug"]
+        assert all(d > 0 for d in s["durations"]), s["slug"]
+        assert s["bpm"] > 0, s["slug"]
+
+
+def test_zeldas_lullaby_keeps_its_three_four_rhythm():
+    s = next(s for s in SONGS if s["slug"] == "zeldas-lullaby")
+    assert s["durations"] == [2, 1, 3, 2, 1, 3]  # half, quarter, dotted half (x2)
+
+
+def test_zelda_songs_are_rhythmically_distinct():
+    zelda = [tuple(s["durations"]) for s in SONGS if s["origin"].startswith("The Legend")]
+    assert len(set(zelda)) == len(zelda)

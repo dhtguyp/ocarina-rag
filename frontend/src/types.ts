@@ -7,6 +7,8 @@ export interface Match {
   pitch_penalty: number;
   delta: number;
   notes: number[];
+  durations: number[]; // note lengths in beats (quarter = 1)
+  bpm: number;
 }
 
 export interface QueryResponse {

@@ -23,6 +23,8 @@ class Match(BaseModel):
     pitch_penalty: float
     delta: int
     notes: list[int]  # canonical MIDI notes, for jingle playback
+    durations: list[float]  # note lengths in beats, one per note
+    bpm: int
 
 
 class QueryResponse(BaseModel):
@@ -36,5 +38,7 @@ class SongOut(BaseModel):
     title: str
     origin: str
     notes: list[int]
+    durations: list[float]
+    bpm: int
 
     model_config = {"from_attributes": True}

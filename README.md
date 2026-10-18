@@ -9,7 +9,7 @@ Matching is two-tier:
 
 See [PLAN.md](PLAN.md) for the full design.
 
-> **Status:** feature-complete first version: backend, query API, ocarina UI, unit tests and E2E (API + browser). Known gap: success jingles play only the 6 matched notes.
+> **Status:** feature-complete first version: backend, query API, ocarina UI, unit tests and E2E (API + browser). Success jingles play the matched notes with per-song note lengths and tempo.
 
 ## Requirements
 
