@@ -58,7 +58,7 @@ def test_semitone_shift_feeds_the_penalty(api):
 
 def test_near_miss_is_not_a_success(api):
     notes = list(SONGS["song-of-storms"])
-    notes[2] = 69
+    notes[5] = 71
     body = query(api, notes).json()
     assert body["success"] is False
     assert body["matches"][0]["slug"] == "song-of-storms"

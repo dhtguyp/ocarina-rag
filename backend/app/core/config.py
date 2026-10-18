@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     max_shift: int = 12  # semitone toggle range (+/-)
 
     # Scoring (see PLAN.md section 4)
-    l1_max: float = 24.0  # interval_sim = max(0, 1 - L1 / l1_max)
+    l1_max: float = 16.0  # interval_sim = max(0, 1 - L1 / l1_max)
     penalty_slope: float = 0.01  # per semitone of |delta|
     penalty_cap: float = 0.08  # max pitch penalty
     match_floor: float = 0.5  # min interval_sim to be shown as a match

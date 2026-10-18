@@ -10,6 +10,11 @@ BASE_URL = os.environ.get("E2E_BASE_URL", "http://frontend")
 BACKEND_URL = os.environ.get("E2E_BACKEND_URL", "http://backend:8000")
 
 
+@pytest.fixture(scope="session")
+def base_url() -> str:  # picked up by pytest-playwright, so page.goto("/") works
+    return BASE_URL
+
+
 @pytest.fixture(scope="session", autouse=True)
 def stack_is_up() -> None:
     """Fail fast with a clear message if `docker compose up` wasn't run first."""

@@ -9,7 +9,7 @@ Matching is two-tier:
 
 See [PLAN.md](PLAN.md) for the full design.
 
-> **Status:** work in progress. Backend, query API and the ocarina UI are in place; browser E2E tests and tuning come next.
+> **Status:** feature-complete first version: backend, query API, ocarina UI, unit tests and E2E (API + browser). Known gap: success jingles play only the 6 matched notes.
 
 ## Requirements
 
@@ -48,9 +48,8 @@ docker compose --profile e2e run --rm --build e2e
 docker compose down   # when you're done
 ```
 
-The tests run in a separate container and go through nginx exactly like a browser would (`http://frontend/api/...`), plus a direct backend check. If the stack isn't up, they wait up to 60 s, then stop with a message telling you to run `docker compose up`. Nothing to install.
+The tests run in a separate container (a Playwright image with Chromium) and go through nginx like a real user: API tests over HTTP (`tests/backend/`) plus real-browser UI tests (`tests/frontend/`). The first run downloads the Playwright base image (~2 GB). If the stack isn't up, they wait up to 60 s, then stop with a message telling you to run `docker compose up`. Nothing to install.
 
-The E2E suite lives in `e2e/` (`tests/backend/` today). Browser tests for the UI will be added once it exists.
 
 ## Tech stack
 

@@ -83,9 +83,9 @@ def test_shift_alone_moves_delta(client):
 
 
 def test_near_miss_is_not_a_success(client):
-    # Song of Storms with one note changed: close in shape, but not the song.
+    # Song of Storms with the last note changed: close in shape, but not the song.
     notes = list(BY_SLUG["song-of-storms"])
-    notes[2] = 69
+    notes[5] = 71
     body = post(client, notes).json()
     assert body["matches"]
     assert body["matches"][0]["slug"] == "song-of-storms"

@@ -48,7 +48,7 @@ Seeding is idempotent and runs on backend startup (and is also runnable via `pyt
 * **Stage 1 (Recall): Interval-Based Vectorization**
   * Convert 6 MIDI notes into 5 interval deltas (signed semitone steps between consecutive notes).
   * Store the 5-dim interval vectors in Qdrant using **Manhattan (L1) distance** (not cosine, which ignores magnitude and is a poor fit for short vectors). Ensures **transposition invariance**.
-  * `interval_sim = max(0, 1 - L1 / L1_MAX)` (`L1_MAX` configurable, initial value 24).
+  * `interval_sim = max(0, 1 - L1 / L1_MAX)` (`L1_MAX` configurable, tuned to 16 in Step 5).
   * Retrieve top-K (K = all songs initially; the dataset is tiny).
 * **Stage 2 (Precision): Pitch-Shift Post-Processing Re-Ranking**
   * Store the canonical starting pitch (MIDI) in the Qdrant payload.
@@ -117,7 +117,7 @@ Ocarina-RAG/
 ├── e2e/                        # black-box tests against the composed stack
 │   ├── Dockerfile
 │   ├── pyproject.toml / uv.lock
-│   └── tests/                  # backend/ now; frontend/ (browser) with Step 4
+│   └── tests/                  # backend/ (API over HTTP) and frontend/ (Playwright browser)
 └── frontend/
     ├── Dockerfile              # build + nginx
     ├── nginx.conf              # serves SPA, proxies /api
@@ -153,3 +153,4 @@ Ocarina-RAG/
 * Penalty `min(0.08, 0.01·|Δ|)`; transposed exact matches still succeed; best overall score wins.
 * L1 distance instead of cosine; no-match floor added.
 * SQLite kept for metadata; Alembic dropped.
+* Step 5 tuning: `L1_MAX` 24 → 16. At 24, 10 of the 15,625 playable 6-note sequences were near-misses scoring ≥ 90% (false successes); at 16 only exact interval shapes can succeed (enforced by a backend test), while one-note-off plays still show as close matches. Easter-egg melodies kept as is (closest pair Saria/Rick has interval similarity 0.44 at 16, below the 0.5 floor).
